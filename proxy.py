@@ -17,15 +17,18 @@ def budget():
     try:
         resp = requests.get(API_BASE, params=qp, timeout=TIMEOUT)
         resp.raise_for_status()
+
+        # 🔥 Printataan raaka upstream API vastaus ennen json()-käsittelyä
+        print("=== Upstream API Raw Response ===")
+        print(resp.text)
+        print("=== End of Upstream Response ===")
+
         return jsonify(resp.json())
     except requests.exceptions.HTTPError as http_err:
-        # Jos Tutkihallintoa API palauttaa 400/500, kerrotaan se suoraan asiakkaalle
         return jsonify({"error": f"HTTP error from upstream API: {str(http_err)}"}), resp.status_code if 'resp' in locals() else 502
     except requests.RequestException as e:
-        # Muut virheet kuten timeout tms.
         return jsonify({"error": f"Request failed: {str(e)}"}), 502
     except Exception as e:
-        # Yllättävät virheet
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
 @app.get("/")
@@ -43,3 +46,4 @@ def serve_openapi_spec():
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 8080))
     app.run(host="0.0.0.0", port=port)
+    
