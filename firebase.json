@@ -4,8 +4,8 @@
       {
         "source": "**",
         "run": {
-          "serviceId": "your-cloud-run-service-name",
-          "region": "your-region"
+          "region": "europe-west1",
+          "serviceId": "valtio-budjetti-data-proxy"
         }
       }
     ]
