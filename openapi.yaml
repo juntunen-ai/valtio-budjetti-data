@@ -1,0 +1,84 @@
+openapi: 3.0.1
+info:
+  title: ValtioData plugin API
+  version: "0.1"
+  description: |
+    Proxy ChatGPT-käyttöön. Välittää pyynnöt Suomen valtiontalous-rajapinnan
+    budjettitaloudentapahtumat-endpointille.
+servers:
+  - url: https://<YOUR-SERVICE-DOMAIN>
+paths:
+  /budjettidata:
+    get:
+      operationId: getBudgetData
+      summary: Hakee budjettitalouden tapahtumia Tutkihallintoa-rajapinnasta.
+      parameters:
+        - $ref: '#/components/parameters/yearFrom'
+        - $ref: '#/components/parameters/yearTo'
+        - $ref: '#/components/parameters/monthFrom'
+        - $ref: '#/components/parameters/monthTo'
+        - $ref: '#/components/parameters/paaluokka'
+        - $ref: '#/components/parameters/momentti'
+        - $ref: '#/components/parameters/hallinnonala'
+        - $ref: '#/components/parameters/tilivirasto'
+      responses:
+        "200":
+          description: JSON-objekti Tutkihallintoa-rajapinnasta
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Virheelliset parametrit
+        "502":
+          description: Ulkoisen API:n virhe
+components:
+  parameters:
+    yearFrom:
+      name: yearFrom
+      in: query
+      schema: { type: integer, minimum: 1998 }
+      required: false
+      description: Alkuvuosi (yyyy)
+    yearTo:
+      name: yearTo
+      in: query
+      schema: { type: integer, minimum: 1998 }
+      required: false
+      description: Loppuvuosi (yyyy)
+    monthFrom:
+      name: monthFrom
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 12 }
+      required: false
+      description: Alku­kuukausi (1-12)
+    monthTo:
+      name: monthTo
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 12 }
+      required: false
+      description: Loppu­kuukausi (1-12)
+    paaluokka:
+      name: paaluokka
+      in: query
+      schema: { type: integer }
+      required: false
+      description: Talousarvion pääluokka (esim. 25 = OKM)
+    momentti:
+      name: momentti
+      in: query
+      schema: { type: string }
+      required: false
+      description: Talousarviomomentin koodi, esim. 29.10.30
+    hallinnonala:
+      name: hallinnonala
+      in: query
+      schema: { type: integer }
+      required: false
+      description: Hallinnonalan koodi
+    tilivirasto:
+      name: tilivirasto
+      in: query
+      schema: { type: integer }
+      required: false
+      description: Tiliviraston koodi
