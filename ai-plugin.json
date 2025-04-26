@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "ValtioData",
+  "name_for_model": "valtioData",
+  "description_for_human": "Hae Suomen valtion budjettitalouden tapahtumat.",
+  "description_for_model": "Fetches Finnish state budget events (budjettitaloudentapahtumat) via getBudgetData(params).",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://<YOUR-SERVICE-DOMAIN>/openapi.yaml"
+  },
+  "logo_url": "https://<YOUR-SERVICE-DOMAIN>/logo.png",
+  "contact_email": "you@example.com",
+  "legal_info_url": "https://<YOUR-SERVICE-DOMAIN>/legal.html"
+}
