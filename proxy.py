@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 import requests
 import os
 
+
 app = Flask(__name__)
 
 API_BASE = "https://api.tutkihallintoa.fi/valtiontalous/v1/budjettitaloudentapahtumat"
