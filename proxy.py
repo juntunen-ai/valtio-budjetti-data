@@ -1,66 +1,42 @@
-"""
-ValtioData-proxy – välittää ChatGPT-pluginin pyynnöt
-Suomen valtiontalous-rajapintaan (budjettitaloudentapahtumat).
+from flask import Flask, request, jsonify, send_from_directory
+import requests
+import os
 
-Käynnistyy Renderissä:  python proxy.py
-"""
+app = Flask(__name__)
 
-import http.server
-import socketserver
-import urllib.request
-import urllib.parse
-import json
+API_BASE = "https://api.tutkihallintoa.fi/valtiontalous/v1/budjettitaloudentapahtumat"
+TIMEOUT = 30
 
-API_BASE = (
-    "https://api.tutkihallintoa.fi/valtiontalous/v1/"
-    "budjettitaloudentapahtumat"
-)
+@app.get("/budjettidata")
+def budget():
+    qp = request.args.to_dict(flat=True)
+    if not qp:
+        return jsonify({"error": "Missing query parameters"}), 400
+    try:
+        resp = requests.get(API_BASE, params=qp, timeout=TIMEOUT)
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        return jsonify({"error": str(e)}), 502
+    return jsonify(resp.json())
 
+# NEW: Root route
+@app.get("/")
+def index():
+    return jsonify({"status": "ok", "service": "valtioData proxy"})
 
-class BudgetHandler(http.server.SimpleHTTPRequestHandler):
-    def do_GET(self):
-        parsed_url = urllib.parse.urlparse(self.path)
+# NEW: Serve ai-plugin.json
+@app.get("/ai-plugin.json")
+def serve_plugin_manifest():
+    return send_from_directory(directory='.', path="ai-plugin.json", mimetype='application/json')
 
-        if parsed_url.path == "/":
-            self.send_response(200)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            response = {"status": "ok", "service": "valtioData proxy"}
-            self.wfile.write(json.dumps(response).encode())
-        elif parsed_url.path == "/budjettidata":
-            query_params = urllib.parse.parse_qs(parsed_url.query)
+# NEW: Serve openapi.yaml
+@app.get("/openapi.yaml")
+def serve_openapi_spec():
+    return send_from_directory(directory='.', path="openapi.yaml", mimetype='text/yaml')
 
-            if not query_params:
-                self.send_response(400)
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-                response = {
-                    "error": (
-                        "Anna vähintään yksi rajausparametri "
-                        "(esim. yearFrom, yearTo tai paaluokka)."
-                    )
-                }
-                self.wfile.write(json.dumps(response).encode())
-                return
+app = Flask(__name__)
 
-            target_url = API_BASE + "?" + urllib.parse.urlencode(query_params, doseq=True)
-            try:
-                with urllib.request.urlopen(target_url) as resp:
-                    data = resp.read().decode()
-                    self.send_response(200)
-                    self.send_header("Content-type", "application/json")
-                    self.end_headers()
-                    self.wfile.write(data.encode())
-            except urllib.error.HTTPError as e:
-                self.send_response(502)
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-                response = {"error": str(e)}
-                self.wfile.write(json.dumps(response).encode())
-        else:
-            super().do_GET(self)
+port = int(os.environ.get('PORT', 8080))
 
-
-PORT = 8080
-with socketserver.TCPServer(("", PORT), BudgetHandler) as httpd:
-    httpd.serve_forever()
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=port)
