@@ -5,54 +5,62 @@ Suomen valtiontalous-rajapintaan (budjettitaloudentapahtumat).
 Käynnistyy Renderissä:  python proxy.py
 """
 
-from flask import Flask, request, jsonify
-import requests
-import os
+import http.server
+import socketserver
+import urllib.request
+import urllib.parse
+import json
 
 API_BASE = (
     "https://api.tutkihallintoa.fi/valtiontalous/v1/"
     "budjettitaloudentapahtumat"
 )
-TIMEOUT = 30  # sekuntia
-
-app = Flask(__name__)
 
 
-@app.get("/budjettidata")
-def budget():
-    """Välitä kaikki query-parametrit sellaisenaan ulkoiseen API:in."""
-    qp = request.args.to_dict(flat=True)
+class BudgetHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        parsed_url = urllib.parse.urlparse(self.path)
 
-    # Tarkistus: tyhjä pyyntö ei ole mielekäs
-    if not qp:
-        return (
-            jsonify(
-                {
+        if parsed_url.path == "/":
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            response = {"status": "ok", "service": "valtioData proxy"}
+            self.wfile.write(json.dumps(response).encode())
+        elif parsed_url.path == "/budjettidata":
+            query_params = urllib.parse.parse_qs(parsed_url.query)
+
+            if not query_params:
+                self.send_response(400)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                response = {
                     "error": (
                         "Anna vähintään yksi rajausparametri "
                         "(esim. yearFrom, yearTo tai paaluokka)."
                     )
                 }
-            ),
-            400,
-        )
+                self.wfile.write(json.dumps(response).encode())
+                return
 
-    try:
-        resp = requests.get(API_BASE, params=qp, timeout=TIMEOUT)
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        # Välitä virhekoodi ja viesti eteenpäin
-        return jsonify({"error": str(e)}), 502
+            target_url = API_BASE + "?" + urllib.parse.urlencode(query_params, doseq=True)
+            try:
+                with urllib.request.urlopen(target_url) as resp:
+                    data = resp.read().decode()
+                    self.send_response(200)
+                    self.send_header("Content-type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(data.encode())
+            except urllib.error.HTTPError as e:
+                self.send_response(502)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                response = {"error": str(e)}
+                self.wfile.write(json.dumps(response).encode())
+        else:
+            super().do_GET(self)
 
-    return jsonify(resp.json())
 
-
-@app.get("/")
-def index():
-    """Terveystsekki juuri-polussa."""
-    return {"status": "ok", "service": "valtioData proxy"}, 200
-
-
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8080))
-    app.run(host="0.0.0.0", port=port)
+PORT = 8080
+with socketserver.TCPServer(("", PORT), BudgetHandler) as httpd:
+    httpd.serve_forever()
