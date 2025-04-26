@@ -6,7 +6,7 @@ info:
     Proxy ChatGPT-käyttöön. Välittää pyynnöt Suomen valtiontalous-rajapinnan
     budjettitaloudentapahtumat-endpointille.
 servers:
-  - url: https://<YOUR-SERVICE-DOMAIN>
+  - url: https://https://valtion-budjetti-data.web.app
 paths:
   /budjettidata:
     get:
