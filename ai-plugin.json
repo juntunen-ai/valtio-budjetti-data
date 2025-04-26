@@ -9,9 +9,9 @@
   },
   "api": {
     "type": "openapi",
-    "url": "https://<YOUR-SERVICE-DOMAIN>/openapi.yaml"
+    "url": "https://valtion-budjetti-data.web.app/openapi.yaml"
   },
-  "logo_url": "https://<YOUR-SERVICE-DOMAIN>/logo.png",
+  "logo_url": "https://valtion-budjetti-data.web.app/logo.png",
   "contact_email": "you@example.com",
-  "legal_info_url": "https://<YOUR-SERVICE-DOMAIN>/legal.html"
+  "legal_info_url": "https://https://valtion-budjetti-data.web.app/legal.html"
 }
